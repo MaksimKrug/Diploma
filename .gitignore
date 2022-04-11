@@ -132,3 +132,6 @@ data/
 *.zip
 *.h5
 *.jpg
+*.ckpt
+.vscode/
+src/lightning_logs/*
