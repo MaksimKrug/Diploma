@@ -1,55 +1,23 @@
-from contextlib import redirect_stderr
-from turtle import forward
 import segmentation_models_pytorch as smp
-from torch import nn
 import torch
+import torch.nn.functional as F
+from torch import nn
 
 
-def get_loss(loss_name):
-    # BCE
-    if loss_name == "BCE":
-        loss = smp.losses.SoftBCEWithLogitsLoss()
-    # Focal
-    elif loss_name == "FocalLoss":
-        loss = smp.losses.FocalLoss("binary")
-    # Dice
-    elif loss_name == "DiceLoss":
-        loss = smp.losses.DiceLoss("binary")
-    # TverskyLoss
-    elif loss_name == "TverskyLoss":
-        loss= smp.losses.TverskyLoss("binary")
-    # DiceFocal
-    elif loss_name == "DiceFocal":
-        loss = DiceFocal()
-    # # BiasLoss
-    # elif loss_name == "BiasLoss":
-    #     loss = BiasLoss()
+def get_loss(loss_name, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    # get loss
+    loss = globals()[loss_name](weight)
 
     return loss
 
-class DiceFocal(nn.Module):
-    def __init__(self):
-        super(DiceFocal, self).__init__()
-        self.dice_loss = smp.losses.DiceLoss("binary")
-        self.focal_loss = smp.losses.FocalLoss("binary")
-
-    def forward(self, output, target):
-        dice_loss = self.dice_loss(output, target)
-        focal_loss = self.focal_loss(output, target)
-        loss = dice_loss + focal_loss
-
-        return loss
-        
 
 class BiasLoss(nn.Module):
-    """
-    Paper: https://arxiv.org/abs/2107.11170
-    """
-    def __init__(self, alpha=0.3, beta=0.3, normalisation_mode="global"):
+    def __init__(self, weight, alpha=0.3, beta=0.3, normalisation_mode="global"):
         super(BiasLoss, self).__init__()
         self.alpha = alpha
         self.beta = beta
-        self.ce = nn.CrossEntropyLoss(reduction="none")
+        self.weight = weight
+        self.ce = BCEWeighted(self.weight)
         self.norm_mode = normalisation_mode
         self.global_min = 100000
 
@@ -83,8 +51,102 @@ class BiasLoss(nn.Module):
         weights = (
             (torch.exp(variance_dp_normalised * self.beta) - 1.0) / 1.0
         ) + self.alpha
-        loss = weights * self.ce(output, target)
+        loss = weights.mean() * self.ce(output, target)
 
-        loss = loss.mean()
+        # loss = loss.mean()
+
+        return loss
+
+
+class BCEWeighted(nn.Module):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+        super(BCEWeighted, self).__init__()
+        if torch.cuda.is_available():
+            self.weight = torch.Tensor(weight).to("cuda")
+        else:
+            self.weight = torch.Tensor(weight)
+
+        self.BCELoss = torch.nn.BCEWithLogitsLoss(reduction="none")
+
+    def forward(self, inputs, targets):
+        val = self.BCELoss(inputs, targets)  # [B, C, H, W]
+        val = torch.permute(val, (1, 0, 2, 3)).reshape(11, -1).mean(dim=1)  # [C, -1]
+        val = (val * self.weight).mean()
+
+        return val
+
+
+class DiceLoss(nn.Module):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+        super(DiceLoss, self).__init__()
+        if torch.cuda.is_available():
+            self.weight = torch.Tensor(weight).to("cuda")
+        else:
+            self.weight = torch.Tensor(weight)
+
+    def forward(self, inputs, targets, smooth=1):
+        # sigmoid
+        inputs = F.sigmoid(inputs)
+
+        # calculate intersection
+        intersection = inputs * targets
+        intersection = torch.permute(intersection, (1, 0, 2, 3)).reshape(11, -1).sum(1)
+
+        # calculate dice
+        inputs_sum = torch.sum(inputs, dim=(0, 2, 3))
+        targets_sum = torch.sum(targets, dim=(0, 2, 3))
+
+        dice = (2.0 * intersection + smooth) / (inputs_sum + targets_sum + smooth)
+        dice = (dice * self.weight).mean()
+
+        return 1 - dice
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+        super(FocalLoss, self).__init__()
+
+    def forward(self, inputs, targets, alpha=0.8, gamma=2):
+
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = F.sigmoid(inputs)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        # first compute binary cross-entropy
+        BCE = F.binary_cross_entropy(inputs, targets, reduction="none")
+
+        BCE_EXP = torch.exp(-BCE)
+        focal_loss = alpha * (1 - BCE_EXP) ** gamma * BCE
+
+        return focal_loss.mean()
+
+
+class DiceFocal(nn.Module):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+        super(DiceFocal, self).__init__()
+        self.dice_loss = DiceLoss(weight)
+        self.focal_loss = FocalLoss()
+
+    def forward(self, output, target):
+        dice_loss = self.dice_loss(output, target)
+        focal_loss = self.focal_loss(output, target)
+        loss = dice_loss + focal_loss
+
+        return loss
+
+
+class DiceBCE(nn.Module):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+        super(DiceBCE, self).__init__()
+        self.dice_loss = DiceLoss(weight)
+        self.bce_loss = BCEWeighted(weight)
+
+    def forward(self, output, target):
+        dice_loss = self.dice_loss(output, target)
+        bce_loss = self.bce_loss(output, target)
+        loss = dice_loss + bce_loss
 
         return loss

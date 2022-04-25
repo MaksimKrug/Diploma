@@ -44,21 +44,21 @@ label_list = [
     "cloth",
 ]
 map_classes = {
-    "background": ["_cloth", "_hat"],
+    "background": ["_cloth", "_hat", "_neck_l", "_ear_r"],
     "lips": ["_l_lip", "_u_lip"],
-    "eye": ["_eye_g", "_l_eye", "_r_eye"],
+    "eye": ["_l_eye", "_r_eye"],
     "nose": ["_nose"],
     "hair": ["_hair"],
     "eyebrows": ["_l_brow", "_r_brow"],
     "teeth": ["_mouth"],
-    "face": ["_neck", "_neck_l", "_skin"],
-    "ears": ["_ear_r", "_r_ear", "_l_ear"],
-    "glasses": [],
+    "face": ["_neck", "_skin"],
+    "ears": ["_r_ear", "_l_ear"],
+    "glasses": ["_eye_g"],
     "beard": [],
 }
 
 
-def celeb2npy():
+def celeb2mask():
     """
     Read Celeb images and annotations and save them to .npy
     """
@@ -67,8 +67,8 @@ def celeb2npy():
 
     # iterate over imgs
     for img_path in tqdm(imgs_path):
-        # get list of img labels
-        img_name = os.path.basename(img_path).replace(".jpg", "")
+        # img_name
+        img_name = os.path.basename(img_path).replace(".jpg", "").rjust(5, "0")
         # get img labels
         img_labels = []
         for label_name in label_list:
@@ -92,30 +92,36 @@ def celeb2npy():
                     class_labels.append(temp_labels[0])
             labels_list[class_name] = class_labels
 
-        # save as .npy
-        label_img = []
-        for class_name, _ in CLASSES.items():
-            temp = np.zeros((512, 512, 3))
+        # save as .png
+        mask = np.zeros((512, 512, 3))
+        for class_name in [
+            "background",
+            "face",
+            "hair",
+            "eye",
+            "eyebrows",
+            "teeth",
+            "nose",
+            "lips",
+            "ears",
+            "beard",
+            "glasses",
+        ]:
             for label_path in labels_list[class_name]:
                 label_temp = Image.open(label_path)
                 label_temp = np.array(label_temp)
-                temp[
+                mask[
                     (label_temp[..., 0] != 0)
                     & (label_temp[..., 1] != 0)
                     & (label_temp[..., 2] != 0)
-                ] = 1
-            label_img.append(temp[..., 0])
-        mask = np.stack(label_img, axis=-1).astype(np.float32)
-        # correct background
-        new_back = np.sum(mask[..., 1:10], axis=-1) == 0
-        mask[..., 0] = new_back
+                ] = CLASSES[class_name]
 
-        if mask[..., 0].sum() != mask[..., 0].size:
-            np.save(
+        if mask.sum() != 0:
+            mask = Image.fromarray(mask.astype(np.uint8))
+            mask.save(
                 os.path.join(
-                    "../data/dataset_celebs/CelebA-HQ-masks-array/", img_name + ".npy"
-                ),
-                mask,
+                    "../data/dataset_celebs/CelebA-HQ-masks-images/", img_name + ".png"
+                )
             )
 
 
@@ -156,15 +162,15 @@ def get_data_paths():
     labels = []
     # img paths
     imgs_path = glob("../data/dataset_celebs/CelebA-HQ-img/*.jpg")
-    labels_paths = glob("../data/dataset_celebs/CelebA-HQ-masks-arrays/*.npy")
+    labels_paths = glob("../data/dataset_celebs/CelebA-HQ-masks-images/*.png")
 
     # iterate over imgs
     for img_path in imgs_path:
         # get list of img labels
-        img_name = os.path.basename(img_path).replace(".jpg", "")
+        img_name = os.path.basename(img_path).replace(".jpg", "").rjust(5, "0")
         # get img labels
         label_path = os.path.join(
-            "../data/dataset_celebs/CelebA-HQ-masks-array/", img_name + ".npy"
+            "../data/dataset_celebs/CelebA-HQ-masks-images/", img_name + ".png"
         )
 
         # update inputs
@@ -172,7 +178,6 @@ def get_data_paths():
             input_files.append(img_path)
             labels.append(label_path)
 
-    # zip data
     celeb_dataset = list(zip(["celeb_dataset"] * len(input_files), input_files, labels))
 
     # full data
@@ -195,10 +200,7 @@ class CustomDataset(Dataset):
         # get data_batch
         data_batch = self.data_paths[idx]
         # get data item
-        if data_batch[0] == "community_dataset":
-            data = self.get_community_data(data_batch)
-        elif data_batch[0] == "celeb_dataset":
-            data = self.get_celeb_data(data_batch)
+        data = self.get_sample(data_batch)
 
         return data
 
@@ -206,57 +208,39 @@ class CustomDataset(Dataset):
         augs = A.Compose(
             [
                 A.Resize(256, 256, 1),
-                A.HorizontalFlip(p=0.5),
-                A.RandomBrightnessContrast(p=0.2),
+                # A.HorizontalFlip(p=0.5),
+                # A.RandomBrightnessContrast(p=0.2),
             ]
         )
         return augs
 
-    def get_community_data(self, data_batch):
-        # get_community_data
+    def get_sample(self, data_batch):
         # paths
         img_path, label_path = data_batch[1], data_batch[2]
         # read data
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         label_temp = cv2.imread(label_path)
+        label_temp = cv2.cvtColor(label_temp, cv2.COLOR_BGR2RGB)
+
         # collect labels
         masks = []
-        for _, vals in CLASSES.items():
-            temp = np.zeros_like(label_temp)
+        for vals in CLASSES.values():
+            temp = np.zeros(label_temp.shape[:-1])
             temp[
                 (label_temp[..., 0] == vals[0])
                 & (label_temp[..., 1] == vals[1])
                 & (label_temp[..., 2] == vals[2])
             ] = 1
-            masks.append(temp[..., 0])
-        #
+            masks.append(temp)
+
         # Augs
         transformed = self.augs(image=image, masks=masks)
         image = transformed["image"] / 255
         masks = transformed["masks"]
-        masks = np.stack(masks, axis=-1).astype(np.float32)
+        masks = np.stack(masks, axis=-1)
         image = torch.permute(torch.FloatTensor(image), (2, 0, 1))
         masks = torch.permute(torch.FloatTensor(masks), (2, 0, 1))
 
         return (image, masks)
 
-    def get_celeb_data(self, data_batch):
-        # get_celeb_data
-        # paths
-        img_path, label_path = data_batch[1], data_batch[2]
-        # read data
-        image = cv2.imread(img_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        label = np.load(label_path)
-        masks = [label[..., i] for i in range(label.shape[-1])]
-
-        # Augs
-        transformed = self.augs(image=image, masks=masks)
-        image = transformed["image"] / 255
-        masks = transformed["masks"] 
-        masks = np.stack(masks, axis=-1).astype(np.float32)
-        image = torch.permute(torch.FloatTensor(image), (2, 0, 1))
-        masks = torch.permute(torch.FloatTensor(masks), (2, 0, 1))
-
-        return (image, masks)
