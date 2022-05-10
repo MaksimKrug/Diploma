@@ -12,7 +12,14 @@ def get_loss(loss_name, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
 
 
 class BiasLoss(nn.Module):
-    def __init__(self, weight, alpha=0.3, beta=0.3, normalisation_mode="global"):
+    # https://arxiv.org/pdf/2107.11170.pdf
+    def __init__(
+        self,
+        weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        alpha=0.3,
+        beta=0.3,
+        normalisation_mode="global",
+    ):
         super(BiasLoss, self).__init__()
         self.alpha = alpha
         self.beta = beta
@@ -42,7 +49,7 @@ class BiasLoss(nn.Module):
         features_copy = features.clone().detach()
         features_dp = features_copy.reshape(features_copy.shape[0], -1)
 
-        features_dp = torch.var(features_dp, dim=1)
+        features_dp = torch.var(features_dp, dim=0)
         if self.norm_mode == "global":
             variance_dp_normalised = self.norm_global(features_dp)
         else:
@@ -51,9 +58,8 @@ class BiasLoss(nn.Module):
         weights = (
             (torch.exp(variance_dp_normalised * self.beta) - 1.0) / 1.0
         ) + self.alpha
-        loss = weights.mean() * self.ce(output, target)
 
-        # loss = loss.mean()
+        loss = weights.mean() * self.ce(output, target)
 
         return loss
 
@@ -77,6 +83,7 @@ class BCEWeighted(nn.Module):
 
 
 class DiceLoss(nn.Module):
+    # https://arxiv.org/pdf/1802.05098.pdf
     def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
         super(DiceLoss, self).__init__()
         if torch.cuda.is_available():
@@ -97,14 +104,19 @@ class DiceLoss(nn.Module):
         targets_sum = torch.sum(targets, dim=(0, 2, 3))
 
         dice = (2.0 * intersection + smooth) / (inputs_sum + targets_sum + smooth)
-        dice = (dice * self.weight).mean()
+        dice = 1 - dice
 
-        return 1 - dice
+        return (dice * self.weight).mean()
 
 
 class FocalLoss(nn.Module):
+    # https://arxiv.org/pdf/1708.02002.pdf
     def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
         super(FocalLoss, self).__init__()
+        if torch.cuda.is_available():
+            self.weight = torch.Tensor(weight).to("cuda")
+        else:
+            self.weight = torch.Tensor(weight)
 
     def forward(self, inputs, targets, alpha=0.8, gamma=2):
 
@@ -112,23 +124,24 @@ class FocalLoss(nn.Module):
         inputs = F.sigmoid(inputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        inputs = inputs
+        targets = targets
 
         # first compute binary cross-entropy
         BCE = F.binary_cross_entropy(inputs, targets, reduction="none")
+        BCE = torch.permute(BCE, (1, 0, 2, 3)).reshape(11, -1).sum(1)
 
         BCE_EXP = torch.exp(-BCE)
         focal_loss = alpha * (1 - BCE_EXP) ** gamma * BCE
 
-        return focal_loss.mean()
+        return (focal_loss * self.weight).mean()
 
 
 class DiceFocal(nn.Module):
     def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
         super(DiceFocal, self).__init__()
         self.dice_loss = DiceLoss(weight)
-        self.focal_loss = FocalLoss()
+        self.focal_loss = FocalLoss(weight)
 
     def forward(self, output, target):
         dice_loss = self.dice_loss(output, target)
@@ -150,3 +163,30 @@ class DiceBCE(nn.Module):
         loss = dice_loss + bce_loss
 
         return loss
+
+
+class TverskyLoss(nn.Module):
+    # https://arxiv.org/pdf/1706.05721.pdf
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], alpha=0.5, beta=0.5):
+        super(TverskyLoss, self).__init__()
+        if torch.cuda.is_available():
+            self.weight = torch.Tensor(weight).to("cuda")
+        else:
+            self.weight = torch.Tensor(weight)
+        self.alpha = 0.5
+        self.beta = 0.5
+
+    def forward(self, inputs, targets, smooth=1):
+
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = F.sigmoid(inputs)
+
+        # True Positives, False Positives & False Negatives
+        TP = torch.permute(inputs * targets, (1, 0, 2, 3)).reshape(11, -1).sum(1)
+        FP = torch.permute(inputs * (1 - targets), (1, 0, 2, 3)).reshape(11, -1).sum(1)
+        FN = torch.permute((1 - inputs) * targets, (1, 0, 2, 3)).reshape(11, -1).sum(1)
+        Tversky = (TP + smooth) / (TP + self.alpha * FP + self.beta * FN + smooth)
+        Tversky = 1 - Tversky
+
+        return (Tversky * self.weight).mean()
+

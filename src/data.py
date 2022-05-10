@@ -10,6 +10,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from tqdm.notebook import tqdm
 
+# utils
 CLASSES = {
     "background": [0, 0, 0],
     "lips": [255, 0, 0],
@@ -205,13 +206,7 @@ class CustomDataset(Dataset):
         return data
 
     def get_augs(self):
-        augs = A.Compose(
-            [
-                A.Resize(256, 256, 1),
-                # A.HorizontalFlip(p=0.5),
-                # A.RandomBrightnessContrast(p=0.2),
-            ]
-        )
+        augs = A.Compose([A.Resize(256, 256, 1),])
         return augs
 
     def get_sample(self, data_batch):
