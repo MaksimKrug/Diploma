@@ -70,7 +70,7 @@ Baseline model metrics presented bellow. Model work not bad. Inference time much
 ### [U-Net](https://arxiv.org/pdf/1505.04597.pdf)
 <img src="viz/UNet.png">
 
-<b> U-Net architecture </b>
+<b> Fig. U-Net architecture </b>
 
 U-Net is a widely used architecture for image segmentation. In my work, I used U-Net as a baseline. I changed basic architecture and used different encoders, like Xception, EfficientNet and ect.
 
@@ -78,12 +78,12 @@ U-Net is a widely used architecture for image segmentation. In my work, I used U
 ### [Xception](https://arxiv.org/pdf/1610.02357.pdf)
 <img src="viz/Xception.png">
 
-<b> Separable convolution </b>
+<b> Fig. Separable convolution </b>
 
 <b> From abstract: </b> Xception is an interpretation of Inception modules in convolutional neural networks as being an intermediate step in-between regular convolution and the depthwise separable convolution operation (a depthwise convolution followed by a pointwise convolution). In this light, a depthwise separable convolution can be understood as an Inception module with a maximally large number of towers. <br>
-This observation leads authors to propose a novel deep convolutional neural network architecture inspired by Inception, where Inception modules have been replaced with depthwise separable convolutions. <br>
+This observation leads authors to propose a novel deep convolutional neural network architecture inspired by Inception, where Inception modules have been replaced with depthwise separable convolutions.
 
-The Xception architecture is based on the assumption that information about spatial and channel dimensions can be calculated sequentially without loss of network performance, and decompose the usual convolution into pointwise convolution (determining only inter-channel correlation) and spatial convolution (determining only spatial correlation within a separate context). <br>
+The Xception architecture is based on the assumption that information about spatial and channel dimensions can be calculated sequentially without loss of network performance, and decompose the usual convolution into pointwise convolution (determining only inter-channel correlation) and spatial convolution (determining only spatial correlation within a separate context).
 
 Separable convolution block include two operations:
 1. Pointwise convolution - a convolution operation with 1x1 kernel.
@@ -117,11 +117,11 @@ I tested different encoders for U-Net architecture and compare the results with 
 
 <img src="viz/EfficientNet.png">
 
-<b> EfficientNet model scaling </b>
+<b> Fig. EfficientNet model scaling </b>
 
 <img src="viz/EfficientNetArchitecture.png">
 
-<b> EfficientNet-B0 architecture </b>
+<b> Fig. EfficientNet-B0 architecture </b>
 
 <b> From abstract: </b> Article's authors systematically study model scaling and identify that carefully balancing network depth, width, and resolution can lead to better performance. Based on this observation, they propose a new scaling method that uniformly scales all dimensions of depth/width/resolution using a simple yet highly effective compound coefficient.
 To go even further, they use neural architecture search to design a new baseline network and scale it up to obtain a family of models, called EfficientNets, which achieve much better accuracy and efficiency than previous ConvNets. The difference between B0 and B7 architecture is number of convolutions and others blocks, but number of layers are the same.
@@ -129,11 +129,11 @@ To go even further, they use neural architecture search to design a new baseline
 #### [MobileNetV3](https://arxiv.org/pdf/1905.02244.pdf)
 <img src="viz/MobileNetDepthwiseSeparable.png">
 
-<b> [MobileNetV1](https://arxiv.org/pdf/1704.04861.pdf): depthwise convolution </b>
+<b> Fig. [MobileNetV1](https://arxiv.org/pdf/1704.04861.pdf): depthwise convolution </b>
 
 <img src="viz/MobileNetInvertedResidual.png">
 
-<b> [MobileNetV2](https://arxiv.org/pdf/1801.04381.pdf): inverted residual </b>
+<b> Fig. [MobileNetV2](https://arxiv.org/pdf/1801.04381.pdf): inverted residual </b>
 
 <b> From abstract: </b> MobileNetV3 based on a combination of complementary search techniques as well as a novel architecture design. MobileNetV3 is tuned to mobile phone CPUs through a combination of hardwareaware network architecture search (NAS) complemented by the NetAdapt algorithm and then subsequently improved through novel architecture advances. This paper starts the exploration of how automated search algorithms and network design can work together to harness complementary approaches improving the overall state of the art. Through this process authors create two new MobileNet models for release: MobileNetV3-Large and MobileNetV3-Small which are targeted for high and low resource use cases. These models are then adapted and applied to the tasks of object detection and semantic segmentation. For the task of semantic segmentation (or any dense pixel prediction), authors propose a new efficient segmentation decoder Lite Reduced Atrous Spatial Pyramid Pooling (LR-ASPP). 
 
@@ -149,7 +149,7 @@ To go even further, they use neural architecture search to design a new baseline
 
 <img src="viz/AdamAlgorithm.jpeg">
 
-<b> Adam algorithm </b>
+<b> Fig. Adam algorithm </b>
 
 Notations used here:
 
@@ -171,15 +171,15 @@ We compute the EMA of the gradient squared v-t and use it in the denominator of 
 
 <img src="viz/AdamPGif.gif">
 
-<b> AdamP convergences on a toy example </b>
+<b> Fig. AdamP convergences on a toy example </b>
 
 <img src="viz/AdamPVectors.svg">
 
-<b> Vector directions of the gradient, momentum, and ours </b>
+<b> Fig. Vector directions of the gradient, momentum, and ours </b>
 
 <img src="viz/AdamPSGDAlgorithm.svg">
 
-<b> AdamP algorithm for SGD </b>
+<b> Fig. AdamP algorithm for SGDP and AdamP</b>
 
 <b> From article </b>: widely-used normalization techniques in deep networks result in the scale invariance for weights. Introduction of momentum in gradient-descent (GD) optimizers, when applied on such scale-invariant parameters, decreases the effective learning rate much more rapidly. We suspect the resulting early convergence may have introduced sub-optimality in many SGD and Adam-trained models across machine learning tasks.
 
@@ -187,7 +187,7 @@ We compute the EMA of the gradient squared v-t and use it in the denominator of 
 
 <img src="viz/AdaBeliefAlgorithm.jpeg">
 
-<b> AdaBelief algorithm </b>
+<b> Fig. AdaBelief algorithm </b>
 
 s-t is defined as the EMA of (g-t - m-t)², that is, the square of the difference between the gradient and the EMA of the gradient(m-t). This means that AdaBelief takes a large step when the value of the gradient is close to its EMA, and a small step when the two values are different.
 
