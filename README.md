@@ -225,7 +225,7 @@ Variant of Dice Coefficient. Add weight to False positive and False negative.
 #### [BiasLoss](https://arxiv.org/pdf/2107.11170.pdf)
 Bias Loss focuses the training on a set of valuable data points and prevents the vast number of samples with poor learning features from misleading the optimization process.
 
-<img src="https://render.githubusercontent.com/render/math?math=BiasLoss = -\frac{1} {N} \sum_{i=1}^{N} \sum_{j=1}^{k} z(v_i) y_{ij} logf_j(x_i; \theta)">
+<img src="https://render.githubusercontent.com/render/math?math=BiasLoss = -\frac{1} {N} \sum_{i=1}^{N} \sum_{j=1}^{k} z(v_i) y_{ij} logf_j(x_i; \theta">
 
 <img src="https://render.githubusercontent.com/render/math?math=z(v_i) = exp(v_i * \alpha) - \beta">
 
