@@ -207,29 +207,27 @@ Widely used with skewed datasets. Weights positive examples with coefficients.
 
 <img src="https://render.githubusercontent.com/render/math?math=BCE = -\frac{1} {N} \sum_{i=0}^{N}y_ilog(\^{y_i}) + (1 - y_i) log(1 - \^{y_i})">
 
-$ BCE = -\frac{1} {N} \sum_{i=0}^{N}y_ilog(\^{y_i}) + (1 - y_i) log(1 - \^{y_i}) $
-
 #### [DiceLoss](https://arxiv.org/pdf/1707.03237.pdf)
 Inspired from Dice Coefficient, a metric to evaluate segmentation results. As Dice Coefficient is non-convex in nature, it has been modified to make it more tractable.
 
-$ DiceLoss = 1 - \frac{2\sum_{i}^{N} p_i g_i} {\sum_{i}^{N} p_i^2 + \sum_{i}^{N} g_i^2} $
+<img src="https://render.githubusercontent.com/render/math?math=DiceLoss = 1 - \frac{2\sum_{i}^{N} p_i g_i} {\sum_{i}^{N} p_i^2 + \sum_{i}^{N} g_i^2}">
 
 #### [FocalLoss](https://arxiv.org/pdf/1708.02002.pdf)
 Works best with highly imbalanced dataset. Down weight the contribution of easy examples, enabling model to learn hard examples.
 
-$ FocalLoss = -\alpha_t (1 - p_t)^\gamma log(p_t) $
+<img src="https://render.githubusercontent.com/render/math?math=FocalLoss = -\alpha_t (1 - p_t)^\gamma log(p_t)">
 
 #### [TverskyLoss](https://arxiv.org/pdf/1706.05721.pdf)
 Variant of Dice Coefficient. Add weight to False positive and False negative.
 
-$ TverskyLoss = \frac{\sum_{i=1}^{N} p_0i g_0i} {\sum_{i=1}^{N} p_0i g_0i + \alpha \sum_{i=1}^{N} p_0i g_1i + \beta \sum_{i=1}^{N} p_1i g_0i} $
+<img src="https://render.githubusercontent.com/render/math?math=TverskyLoss = \frac{\sum_{i=1}^{N} p_0i g_0i} {\sum_{i=1}^{N} p_0i g_0i + \alpha \sum_{i=1}^{N} p_0i g_1i + \beta \sum_{i=1}^{N} p_1i g_0i}">
 
 #### [BiasLoss](https://arxiv.org/pdf/2107.11170.pdf)
 Bias Loss focuses the training on a set of valuable data points and prevents the vast number of samples with poor learning features from misleading the optimization process.
 
-$ BiasLoss = -\frac{1} {N} \sum_{i=1}^{N} \sum_{j=1}^{k} z(v_i) y_{ij} logf_j(x_i; \theta) $
+<img src="https://render.githubusercontent.com/render/math?math=BiasLoss = -\frac{1} {N} \sum_{i=1}^{N} \sum_{j=1}^{k} z(v_i) y_{ij} logf_j(x_i; \theta)">
 
-$ z(v_i) = exp(v_i * \alpha) - \beta $
+<img src="https://render.githubusercontent.com/render/math?math=z(v_i) = exp(v_i * \alpha) - \beta">
 
 
 ## [DDRNET-23-slim](https://arxiv.org/pdf/2101.06085v2.pdf)
