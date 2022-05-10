@@ -205,7 +205,7 @@ For all losses I used weighted version (calculate loss and multiply on weights).
 #### BCEWeighted
 Widely used with skewed datasets. Weights positive examples with coefficients.
 
-$ BCE = -\frac{1} {N} \sum_{i=0}^{N}y_ilog(\^{y_i}) + (1 - y_i) log(1 - \^{y_i}) $
+$`BCE = -\frac{1} {N} \sum_{i=0}^{N}y_ilog(\^{y_i}) + (1 - y_i) log(1 - \^{y_i})`$
 
 #### [DiceLoss](https://arxiv.org/pdf/1707.03237.pdf)
 Inspired from Dice Coefficient, a metric to evaluate segmentation results. As Dice Coefficient is non-convex in nature, it has been modified to make it more tractable.
