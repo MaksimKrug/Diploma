@@ -232,6 +232,33 @@ Bias Loss focuses the training on a set of valuable data points and prevents the
 
 ## [DDRNET-23-slim](https://arxiv.org/pdf/2101.06085v2.pdf)
 
+
+| Model          | Weights      | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
+| --------       | ----         | --------- | ---------------- | ------- | ---   | --    | ------------------ |
+| ddrnet_23_slim | equal        | Adam      | 5.7              | 192     | 0.733 | 0.839 | 5.831              |
+| ddrnet_23_slim | proportional | Adam      | 5.7              | 192     | 0.772 | 0.868 | 5.945              |
+| ddrnet_23_slim | proportional | AdamP     | 5.7              | 192     | 0.786 | 0.878 | 6.446              |
+
+
+| Model     | Weights      | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time, ms |
+| --------  | ----         | --------- | ----------------  | ------- | ---   | --    | ------------------ |
+| ddrnet_23 | equal        | Adam      | 20.1              | 192     | 0.766 | 0.863 | 6.380              |
+| ddrnet_23 | proportional | Adam      | 20.1              | 192     | 0.797 | 0.884 | 6.494              |
+| ddrnet_23 | proportional | AdamP     | 20.1              | 192     | 0.808 | 0.891 | 6.510              |
+
+
 <b> From abstract: </b> Using light-weight architectures (encoder-decoder or two-pathway) or reasoning on low-resolution images, recent methods realize very fast scene parsing, even running at more than 100 FPS on a single 1080Ti GPU. However, there is still a significant gap in performance between these real-time methods and the models based on dilation backbones. To tackle this problem, we proposed a family of efficient backbones specially designed for real-time semantic segmentation. The proposed deep dual-resolution networks (DDRNets) are composed of two deep branches between which multiple bilateral fusions are performed. Additionally, we design a new contextual information extractor named Deep Aggregation Pyramid Pooling Module (DAPPM) to enlarge effective receptive fields and fuse multi-scale context based on low-resolution feature maps.
 
+<img src="viz/DDRNetArchitecture.png">
+
+<b> Fig. DDRNet architecture </b>
+
+
+## [RegSeg](https://arxiv.org/pdf/2111.09957.pdf)
+
+| Model     | Weights      | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time, ms |
+| --------  | ----         | --------- | ----------------  | ------- | ---   | --    | ------------------ |
+| regseg    | equal        | Adam      | 3.3               | 371     | 0.783 | 0.875 | 9.629              |
+| regseg    | proportional | Adam      | 3.3               | 371     | 0.828 | 0.905 | 10.071             |
+| regseg    | proportional | AdamP     | 3.3               | 371     | 0.833 | 0.908 | 9.968              |
 
