@@ -70,8 +70,8 @@ public class MainActivity extends AppCompatActivity {
         put(6, 0.5);
         put(7, 0.5);
         put(8, 0.5);
-        put(9, 0.05);
-        put(10, 0.05);
+        put(9, 0.5);
+        put(10, 0.5);
     }};
 
 
@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                 int initial_width = mBitmap.getWidth();
                 int initial_height = mBitmap.getHeight();
 
-                mBitmap = Bitmap.createScaledBitmap(mBitmap, 320, 320, true); // convert to 256x256
+                mBitmap = Bitmap.createScaledBitmap(mBitmap, 256, 256, true); // convert to 256x256
                 mImageView.setImageBitmap(mBitmap);
 
                 // read model
