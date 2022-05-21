@@ -7,8 +7,10 @@ The main purpose of diploma is to develop Neural Network approach for face segme
 5. Android application have work but haven't be perefectly designed according to UI and UX
 
 
+
 ## Business purposes
 Example like [here](https://github.com/zllrunning/face-parsing.PyTorch)
+
 
 
 ## Data
@@ -29,6 +31,7 @@ For each real image there exist a PNG RGB label image pair. It encodies the 11 d
 9. Teeth
 10. Facial hair/beard
 11. Specs/sunglasses
+
 
 ### [CelebAMask-HQ](https://github.com/switchablenorms/CelebAMask-HQ)
 CelebAMask-HQ is a large-scale face image dataset that has 30,000 high-resolution face images selected from the CelebA dataset by following CelebA-HQ. Each image has segmentation mask of facial attributes corresponding to CelebA.
@@ -51,6 +54,7 @@ Preprocessing:
     11. Beard: None,
 
 
+
 ## Baseline & Experiments with weights, optimizers and loss functions
 For baselines I used different encoders, optimizers and losses. For models training I used features:
 1. Epochs = 15
@@ -62,9 +66,9 @@ For baselines I used different encoders, optimizers and losses. For models train
 7. Metrics = F1 and IoU macro
 
 Baseline model metrics presented bellow. Model work not bad. Inference time much less then we need for 30 FPS. But also for RTX 3060, for mobile devices model will work much slower.
-| Model | Backbone | Loss        | Optimizer   | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
-| ----- | -------- | ----        | ---------   | ---------------- | ------- | ---   | --    | ------------------ |
-| unet | xception  | BCEWeighted | Adam        | 28.8             | 278     | 0.723 | 0.802 | 7.416              |
+| Model | Backbone | Loss        | Optimizer   | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms|
+| ----- | -------- | ----        | ---------   | ---------------- | ------- | ---   | --    | ------------------       | ----------------------- |
+| unet  | xception | BCEWeighted | Adam        | 28.8             | 278     | 0.843 | 0.913 | 6.032                    | 87.607                  |
 
 
 ### [U-Net](https://arxiv.org/pdf/1505.04597.pdf)
@@ -99,19 +103,20 @@ Model was tested with different weights for classes. Order of classes is [backgr
 
 The best results we have when train model with proportional weights. We have highly unbalanced classes distribution and it's normal to have such results.
 
-| Weights      | Backbone | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
-| -----        | -------- | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------ |
-| equals       | xception | BCEWeighted | Adam      | 28.8             | 278     | 0.723 | 0.802 | 7.416              |
-| empirical    | xception | BCEWeighted | Adam      | 28.8             | 278     | 0.824 | 0.902 | 9.424              |
-| proportional | xception | BCEWeighted | Adam      | 28.8             | 278     | 0.834 | 0.909 | 11.86              |
+| Weights      | Backbone | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| -----        | -------- | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------       | ------------------------ |
+| equals       | xception | BCEWeighted | Adam      | 28.8             | 278     | 0.843 | 0.913 | 6.032                    | 87.605                   |
+| empirical    | xception | BCEWeighted | Adam      | 28.8             | 278     | 0.852 | 0.919 | 6.095                    | 88.445                   |
+| proportional | xception | BCEWeighted | Adam      | 28.8             | 278     | 0.855 | 0.921 | 6.156                    | 88.694                   |
 
 
 ### Backbones
 I tested different encoders for U-Net architecture and compare the results with Xception. For this and further tests I used proportional weights.
-| Backbone              | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
-| --------              | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------ |
-| efficientnet-b3       | BCEWeighted | Adam      | 13.2             | 455     | 0.816 | 0.897 | 16.368             |
-| mobilenetv3_large_100 | BCEWeighted | Adam      | 6.7              | 274     | 0.801 | 0.888 | 8.033              |
+
+| Backbone              | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| --------              | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------       | ------------------------ |
+| efficientnet-b3       | BCEWeighted | Adam      | 13.2             | 455     | 0.853 | 0.920 | 13.615                   | 68.795                   |
+| mobilenetv3_large_100 | BCEWeighted | Adam      | 6.7              | 274     | 0.853 | 0.920 | 7.182                    | 34.234                   |
 
 #### [EfficientNet-B3](https://arxiv.org/pdf/1905.11946.pdf)
 
@@ -140,10 +145,10 @@ To go even further, they use neural architecture search to design a new baseline
 
 ### Optimizers
 
-| Backbone | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
-| -------- | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------ |
-| xception | BCEWeighted | AdamP     | 28.8             | 278     | 0.867 | 0.928 | 7.244              |
-| xception | BCEWeighted | AdaBelief | 28.8             | 278     | 0.754 | 0.858 | 7.342              |
+| Backbone | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| -------- | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------       | ------------------------ |
+| xception | BCEWeighted | AdamP     | 28.8             | 278     | 0.867 | 0.928 | 6.198                    | 87.069                   |
+| xception | BCEWeighted | AdaBelief | 28.8             | 278     | 0.712 | 0.829 | 6.191                    | 88.910                   |
 
 #### [Adam](https://arxiv.org/pdf/1412.6980.pdf)
 
@@ -194,13 +199,12 @@ s-t is defined as the EMA of (g-t - m-t)², that is, the square of the differenc
 ### Losses
 For all losses I used weighted version (calculate loss and multiply on weights). Loss calculated separately for all classes. As a result we are using mean value of loss for each class.
 
-| Backbone | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
-| -------- | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------ |
-| xception | DiceLoss    | Adam      | 28.8             | 278     | 0.700 | 0.818 | 6.894              |
-| xception | FocalLoss   | Adam      | 28.8             | 278     | 0.819 | 0.899 | 7.136              |
-| xception | TverskyLoss | Adam      | 28.8             | 278     | 0.673 | 0.783 | 7.325              |
-| xception | BiasLoss    | Adam      | 28.8             | 278     | 0.807 | 0.891 | 7.283              |
-
+| Backbone | Loss        | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| -------- | ----        | --------- | ---------------- | ------- | ---   | --    | ------------------       | ------------------------ |
+| xception | DiceLoss    | Adam      | 28.8             | 277     | 0.776 | 0.872 | 6.220                    | 89.336                   |
+| xception | FocalLoss   | Adam      | 28.8             | 277     | 0.864 | 0.926 | 6.180                    | 94.125                   |
+| xception | TverskyLoss | Adam      | 28.8             | 277     | 0.777 | 0.872 | 6.355                    | 88.892                   |
+| xception | BiasLoss    | Adam      | 28.8             | 279     | 0.865 | 0.926 | 6.269                    | 88.739                   |
 
 #### BCEWeighted
 Widely used with skewed datasets. Weights positive examples with coefficients.
@@ -232,20 +236,17 @@ Bias Loss focuses the training on a set of valuable data points and prevents the
 
 ## [DDRNET-23-slim](https://arxiv.org/pdf/2101.06085v2.pdf)
 
+| Model          | Weights      | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| --------       | ----         | --------- | ---------------- | ------- | ---   | --    | ------------------       | ------------------------ |
+| ddrnet_23_slim | equal        | Adam      | 5.7              | 192     | 0.748 | 0.850 | 5.252                    | 13.166                   |
+| ddrnet_23_slim | proportional | Adam      | 5.7              | 192     | 0.781 | 0.874 | 5.791                    | 13.583                   |
+| ddrnet_23_slim | proportional | AdamP     | 5.7              | 192     | 0.756 | 0.858 | 5.803                    | 13.702                   |
 
-| Model          | Weights      | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time, ms |
-| --------       | ----         | --------- | ---------------- | ------- | ---   | --    | ------------------ |
-| ddrnet_23_slim | equal        | Adam      | 5.7              | 192     | 0.733 | 0.839 | 5.831              |
-| ddrnet_23_slim | proportional | Adam      | 5.7              | 192     | 0.772 | 0.868 | 5.945              |
-| ddrnet_23_slim | proportional | AdamP     | 5.7              | 192     | 0.786 | 0.878 | 6.446              |
-
-
-| Model     | Weights      | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time, ms |
-| --------  | ----         | --------- | ----------------  | ------- | ---   | --    | ------------------ |
-| ddrnet_23 | equal        | Adam      | 20.1              | 192     | 0.766 | 0.863 | 6.380              |
-| ddrnet_23 | proportional | Adam      | 20.1              | 192     | 0.797 | 0.884 | 6.494              |
-| ddrnet_23 | proportional | AdamP     | 20.1              | 192     | 0.808 | 0.891 | 6.510              |
-
+| Model     | Weights      | Optimizer | Model Parameters | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| --------  | ----         | --------- | ---------------- | ------- | ---   | --    | ------------------       | ------------------------ |
+| ddrnet_23 | equal        | Adam      | 20.1             | 192     | 0.775 | 0.869 | 5.981                    | 34.004                   |
+| ddrnet_23 | proportional | Adam      | 20.1             | 192     | 0.790 | 0.880 | 6.053                    | 34.580                   |
+| ddrnet_23 | proportional | AdamP     | 20.1             | 192     | 0.794 | 0.882 | 6.512                    | 35.689                   |
 
 <b> From abstract: </b> Using light-weight architectures (encoder-decoder or two-pathway) or reasoning on low-resolution images, recent methods realize very fast scene parsing, even running at more than 100 FPS on a single 1080Ti GPU. However, there is still a significant gap in performance between these real-time methods and the models based on dilation backbones. To tackle this problem, we proposed a family of efficient backbones specially designed for real-time semantic segmentation. The proposed deep dual-resolution networks (DDRNets) are composed of two deep branches between which multiple bilateral fusions are performed. Additionally, we design a new contextual information extractor named Deep Aggregation Pyramid Pooling Module (DAPPM) to enlarge effective receptive fields and fuse multi-scale context based on low-resolution feature maps.
 
@@ -256,9 +257,9 @@ Bias Loss focuses the training on a set of valuable data points and prevents the
 
 ## [RegSeg](https://arxiv.org/pdf/2111.09957.pdf)
 
-| Model     | Weights      | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time, ms |
-| --------  | ----         | --------- | ----------------  | ------- | ---   | --    | ------------------ |
-| regseg    | equal        | Adam      | 3.3               | 371     | 0.783 | 0.875 | 9.629              |
-| regseg    | proportional | Adam      | 3.3               | 371     | 0.828 | 0.905 | 10.071             |
-| regseg    | proportional | AdamP     | 3.3               | 371     | 0.833 | 0.908 | 9.968              |
+| Model     | Weights      | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
+| --------  | ----         | --------- | ----------------  | ------- | ---   | --    | ------------------       | ------------------------ |
+| regseg    | equal        | Adam      | 3.3               | 371     | 0.771 | 0.872 | 9.064                    | 22.634                   |
+| regseg    | proportional | Adam      | 3.3               | 371     | 0.817 | 0.898 | 10.114                   | 22.576                   |
+| regseg    | proportional | AdamP     | 3.3               | 371     | 0.808 | 0.892 | 10.051                   | 22.182                   |
 
