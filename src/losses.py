@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from torch import nn
 
 
-def get_loss(loss_name, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+def get_loss(loss_name, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], num_classes=11):
     # get loss
-    loss = globals()[loss_name](weight)
+    loss = globals()[loss_name](weight, num_classes)
 
     return loss
 
@@ -16,6 +16,7 @@ class BiasLoss(nn.Module):
     def __init__(
         self,
         weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        num_classes=11,
         alpha=0.3,
         beta=0.3,
         normalisation_mode="global",
@@ -24,6 +25,7 @@ class BiasLoss(nn.Module):
         self.alpha = alpha
         self.beta = beta
         self.weight = weight
+        self.num_classes = num_classes
         self.ce = BCEWeighted(self.weight)
         self.norm_mode = normalisation_mode
         self.global_min = 100000
@@ -65,7 +67,7 @@ class BiasLoss(nn.Module):
 
 
 class BCEWeighted(nn.Module):
-    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], num_classes=11):
         super(BCEWeighted, self).__init__()
         if torch.cuda.is_available():
             self.weight = torch.Tensor(weight).to("cuda")
@@ -73,10 +75,13 @@ class BCEWeighted(nn.Module):
             self.weight = torch.Tensor(weight)
 
         self.BCELoss = torch.nn.BCEWithLogitsLoss(reduction="none")
+        self.num_classes = num_classes
 
     def forward(self, inputs, targets):
         val = self.BCELoss(inputs, targets)  # [B, C, H, W]
-        val = torch.permute(val, (1, 0, 2, 3)).reshape(11, -1).mean(dim=1)  # [C, -1]
+        val = (
+            torch.permute(val, (1, 0, 2, 3)).reshape(self.num_classes, -1).mean(dim=1)
+        )  # [C, -1]
         val = (val * self.weight).mean()
 
         return val
@@ -84,12 +89,13 @@ class BCEWeighted(nn.Module):
 
 class DiceLoss(nn.Module):
     # https://arxiv.org/pdf/1802.05098.pdf
-    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], num_classes=11):
         super(DiceLoss, self).__init__()
         if torch.cuda.is_available():
             self.weight = torch.Tensor(weight).to("cuda")
         else:
             self.weight = torch.Tensor(weight)
+        self.num_classes = num_classes
 
     def forward(self, inputs, targets, smooth=1):
         # sigmoid
@@ -97,7 +103,11 @@ class DiceLoss(nn.Module):
 
         # calculate intersection
         intersection = inputs * targets
-        intersection = torch.permute(intersection, (1, 0, 2, 3)).reshape(11, -1).sum(1)
+        intersection = (
+            torch.permute(intersection, (1, 0, 2, 3))
+            .reshape(self.num_classes, -1)
+            .sum(1)
+        )
 
         # calculate dice
         inputs_sum = torch.sum(inputs, dim=(0, 2, 3))
@@ -111,12 +121,13 @@ class DiceLoss(nn.Module):
 
 class FocalLoss(nn.Module):
     # https://arxiv.org/pdf/1708.02002.pdf
-    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], num_classes=11):
         super(FocalLoss, self).__init__()
         if torch.cuda.is_available():
             self.weight = torch.Tensor(weight).to("cuda")
         else:
             self.weight = torch.Tensor(weight)
+        self.num_classes = num_classes
 
     def forward(self, inputs, targets, alpha=0.8, gamma=2):
 
@@ -129,7 +140,7 @@ class FocalLoss(nn.Module):
 
         # first compute binary cross-entropy
         BCE = F.binary_cross_entropy(inputs, targets, reduction="none")
-        BCE = torch.permute(BCE, (1, 0, 2, 3)).reshape(11, -1).sum(1)
+        BCE = torch.permute(BCE, (1, 0, 2, 3)).reshape(self.num_classes, -1).sum(1)
 
         BCE_EXP = torch.exp(-BCE)
         focal_loss = alpha * (1 - BCE_EXP) ** gamma * BCE
@@ -138,10 +149,10 @@ class FocalLoss(nn.Module):
 
 
 class DiceFocal(nn.Module):
-    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], num_classes=11):
         super(DiceFocal, self).__init__()
-        self.dice_loss = DiceLoss(weight)
-        self.focal_loss = FocalLoss(weight)
+        self.dice_loss = DiceLoss(weight, num_classes)
+        self.focal_loss = FocalLoss(weight, num_classes)
 
     def forward(self, output, target):
         dice_loss = self.dice_loss(output, target)
@@ -152,10 +163,10 @@ class DiceFocal(nn.Module):
 
 
 class DiceBCE(nn.Module):
-    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
+    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], num_classes=11):
         super(DiceBCE, self).__init__()
-        self.dice_loss = DiceLoss(weight)
-        self.bce_loss = BCEWeighted(weight)
+        self.dice_loss = DiceLoss(weight, num_classes)
+        self.bce_loss = BCEWeighted(weight, num_classes)
 
     def forward(self, output, target):
         dice_loss = self.dice_loss(output, target)
@@ -167,12 +178,19 @@ class DiceBCE(nn.Module):
 
 class TverskyLoss(nn.Module):
     # https://arxiv.org/pdf/1706.05721.pdf
-    def __init__(self, weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], alpha=0.5, beta=0.5):
+    def __init__(
+        self,
+        weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        num_classes=11,
+        alpha=0.5,
+        beta=0.5,
+    ):
         super(TverskyLoss, self).__init__()
         if torch.cuda.is_available():
             self.weight = torch.Tensor(weight).to("cuda")
         else:
             self.weight = torch.Tensor(weight)
+        self.num_classes = num_classes
         self.alpha = 0.5
         self.beta = 0.5
 
@@ -182,9 +200,21 @@ class TverskyLoss(nn.Module):
         inputs = F.sigmoid(inputs)
 
         # True Positives, False Positives & False Negatives
-        TP = torch.permute(inputs * targets, (1, 0, 2, 3)).reshape(11, -1).sum(1)
-        FP = torch.permute(inputs * (1 - targets), (1, 0, 2, 3)).reshape(11, -1).sum(1)
-        FN = torch.permute((1 - inputs) * targets, (1, 0, 2, 3)).reshape(11, -1).sum(1)
+        TP = (
+            torch.permute(inputs * targets, (1, 0, 2, 3))
+            .reshape(self.num_classes, -1)
+            .sum(1)
+        )
+        FP = (
+            torch.permute(inputs * (1 - targets), (1, 0, 2, 3))
+            .reshape(self.num_classes, -1)
+            .sum(1)
+        )
+        FN = (
+            torch.permute((1 - inputs) * targets, (1, 0, 2, 3))
+            .reshape(self.num_classes, -1)
+            .sum(1)
+        )
         Tversky = (TP + smooth) / (TP + self.alpha * FP + self.beta * FN + smooth)
         Tversky = 1 - Tversky
 

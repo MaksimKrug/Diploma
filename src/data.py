@@ -126,7 +126,10 @@ def celeb2mask():
             )
 
 
-def get_data_paths():
+def get_data_paths(
+    celeb_img_path="../data/dataset_celebs/CelebA-HQ-img/*.jpg",
+    celeb_mask_path="../data/dataset_celebs/CelebA-HQ-masks-images/",
+):
     # PARSE COMMUNITY DATASET
     # utils
     xml_path = "../data/dataset_community/training.xml"
@@ -162,7 +165,7 @@ def get_data_paths():
     input_files = []
     labels = []
     # img paths
-    imgs_path = glob("../data/dataset_celebs/CelebA-HQ-img/*.jpg")
+    imgs_path = glob(celeb_img_path)
     labels_paths = glob("../data/dataset_celebs/CelebA-HQ-masks-images/*.png")
 
     # iterate over imgs
@@ -170,9 +173,7 @@ def get_data_paths():
         # get list of img labels
         img_name = os.path.basename(img_path).replace(".jpg", "").rjust(5, "0")
         # get img labels
-        label_path = os.path.join(
-            "../data/dataset_celebs/CelebA-HQ-masks-images/", img_name + ".png"
-        )
+        label_path = os.path.join(celeb_mask_path, img_name + ".png")
 
         # update inputs
         if os.path.exists(label_path):
@@ -188,10 +189,11 @@ def get_data_paths():
 
 
 class CustomDataset(Dataset):
-    def __init__(self, data_paths, img_size=(256, 256)):
+    def __init__(self, data_paths, img_size=(224, 224), num_classes="all"):
         # utils
         self.data_paths = data_paths
         self.img_size = img_size
+        self.num_classes = num_classes
         self.augs = self.get_augs()
 
     def __len__(self):
@@ -206,26 +208,53 @@ class CustomDataset(Dataset):
         return data
 
     def get_augs(self):
-        augs = A.Compose([A.Resize(256, 256, 1),])
+        augs = A.Compose([A.Resize(self.img_size[0], self.img_size[1], 1),])
         return augs
 
     def get_sample(self, data_batch):
         # paths
-        img_path, label_path = data_batch[1], data_batch[2]
+        dataset_name, img_path, label_path = data_batch
         # read data
         image = cv2.imread(img_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if dataset_name == "community_dataset":
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # if dataset_name == "celeb_dataset" and "imgs_256" not in img_path:
+        #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         label_temp = cv2.imread(label_path)
-        label_temp = cv2.cvtColor(label_temp, cv2.COLOR_BGR2RGB)
+        if dataset_name == "community_dataset":
+            label_temp = cv2.cvtColor(label_temp, cv2.COLOR_BGR2RGB)
+        if dataset_name == "celeb_dataset" and "masks_256" not in label_path:
+            label_temp = cv2.cvtColor(label_temp, cv2.COLOR_BGR2RGB)
 
         # collect labels
         masks = []
-        for vals in CLASSES.values():
+        if self.num_classes == "all":
+            for class_name, vals in CLASSES.items():
+                temp = np.zeros(label_temp.shape[:-1])
+                temp[
+                    (label_temp[..., 0] == vals[0])
+                    & (label_temp[..., 1] == vals[1])
+                    & (label_temp[..., 2] == vals[2])
+                ] = 1
+                masks.append(temp)
+
+        elif self.num_classes == "lips":
+            vals = CLASSES["lips"]
+            # Lips
             temp = np.zeros(label_temp.shape[:-1])
             temp[
                 (label_temp[..., 0] == vals[0])
                 & (label_temp[..., 1] == vals[1])
                 & (label_temp[..., 2] == vals[2])
+            ] = 1
+            masks.append(temp)
+            # No Lips
+            temp = np.zeros(label_temp.shape[:-1])
+            temp[
+                (label_temp[..., 0] != vals[0])
+                | (label_temp[..., 1] != vals[1])
+                | (label_temp[..., 2] != vals[2])
             ] = 1
             masks.append(temp)
 

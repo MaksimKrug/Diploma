@@ -21,16 +21,23 @@ def train_loop(
     train_dataloader,
     val_dataloader,
     test_dataloader,
+    continue_training=False,
 ):
     # callbacks
     callbacks, logger = get_callbacks(
         logger_name, logger_save_path, callback_name, callback_save_path
     )
+
     # init model
-    model = PretrainedModel(**params)
-    model_parameters = round(
-        sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6, 1
-    )
+    if continue_training:
+        model = PretrainedModel.load_from_checkpoint(
+            f"{callback_save_path}/{callback_name}.ckpt"
+        )
+    else:
+        model = PretrainedModel(**params)
+        model_parameters = round(
+            sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6, 1
+        )
 
     # train model
     trainer = pl.Trainer(gpus=1, max_epochs=epochs, logger=logger, callbacks=callbacks,)
@@ -50,7 +57,9 @@ def train_loop(
     model_metrics = trainer.test(model, test_dataloader)
 
     # get inference time
-    inference_time = calculate_inference_time(test_dataloader, model)
+    inference_time_gpu, inference_time_cpu = calculate_inference_time(
+        test_dataloader, model
+    )
 
     # update test metrics
     test_metrics = test_metrics.append(
@@ -63,7 +72,8 @@ def train_loop(
             "modules": len([l for l in model.modules()]),
             "IoU": model_metrics[0]["test_iou"],
             "F1": model_metrics[0]["test_f1"],
-            "Inference Time, ms": inference_time,
+            "Inference Time (GPU), ms": inference_time_gpu,
+            "Inference Time (CPU), ms": inference_time_cpu,
         },
         ignore_index=True,
     )
@@ -93,6 +103,8 @@ class PretrainedModel(pl.LightningModule):
         lr,
         weight_decay,
         automatic_optimization=True,
+        scheduler_type="Plateau",
+        scheduler_patience=2,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -106,6 +118,8 @@ class PretrainedModel(pl.LightningModule):
         self.optimizer_name = optimizer_name
         self.lr = lr
         self.weight_decay = weight_decay
+        self.scheduler_type = scheduler_type
+        self.scheduler_patience = scheduler_patience
 
         # init pretrained model from https://github.com/qubvel/segmentation_models.pytorch
         self.model = smp.create_model(
@@ -208,9 +222,18 @@ class PretrainedModel(pl.LightningModule):
         optimizer = get_optimizer(
             self.optimizer_name, self.parameters(), self.lr, self.weight_decay
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, patience=1, factor=0.1, verbose=False
-        )
+        if self.scheduler_type == "Plateau":
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                patience=self.scheduler_patience,
+                factor=0.5,
+                verbose=True,
+                mode="max",
+            )
+        elif self.scheduler_type == "Step":
+            scheduler = torch.optim.lr_scheduler.StepLR(
+                optimizer, step_size=self.scheduler_patience, gamma=0.5, verbose=True
+            )
         return {
             "optimizer": optimizer,
             "lr_scheduler": {"scheduler": scheduler, "monitor": "val_f1"},
