@@ -286,7 +286,7 @@ model	loss	optimizer	model_parameters	modules	IoU	F1	Inference Time (GPU), ms	In
 
 For final model I used RegSeg. Trained model on the entire dataset, 100 epochs, and the same scheduler and early stopping. Batch size = 16.
 
-As a production solution I used model with FocalLoss, softmax for visualization and 320x320 for image resolution.
+As a production solution I used model with FocalLoss, softmax for visualization and 256x256 for image resolution.
 
 | Model     | Weights      | Loss        | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
 | --------  | ----         | ----        |---------  | ----------------  | ------- | ---   | --    | ------------------       | ------------------------ |
