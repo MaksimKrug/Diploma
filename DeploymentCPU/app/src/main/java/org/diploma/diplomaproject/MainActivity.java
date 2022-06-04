@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 int initial_width = mBitmap.getWidth();
                 int initial_height = mBitmap.getHeight();
 
-                mBitmap = Bitmap.createScaledBitmap(mBitmap, 320, 320, true); // convert to 320x320
+                mBitmap = Bitmap.createScaledBitmap(mBitmap, 256, 256, true); // convert to 320x320
                 mImageView.setImageBitmap(mBitmap);
 
                 // read model
