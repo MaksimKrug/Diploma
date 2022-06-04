@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 import pytorch_lightning as pl
 import segmentation_models_pytorch as smp
@@ -32,7 +33,7 @@ def get_optimizer(optimizer_name, model_params, lr, weight_decay):
     """
     Get optimizer from torch.optim or from torch_optimizer
     """
-    if optimizer_name in ["SGD", "Adam"]:
+    if optimizer_name in ["SGD", "Adam", "AdamW"]:
         optimizer = getattr(torch.optim, optimizer_name)(
             model_params, lr=lr, weight_decay=weight_decay
         )
@@ -100,3 +101,16 @@ def calculate_inference_time(dataloader, model):
     inference_time_cpu = (time_val / (iters - 10)) * 1000 / batch_size
 
     return inference_time_gpu, inference_time_cpu
+
+
+def get_weights(dataloaders: List[torch.utils.data.DataLoader]):
+    # calculate weights for each class
+    w = torch.FloatTensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    for dataloader in dataloaders:
+        for x, y in dataloader:
+            w += torch.sum(y, dim=(0, 2, 3))
+    # normalize weights
+    weight = 1 / (w / w.sum())
+    weight = weight / torch.pow(torch.prod(weight), 1 / 11)
+
+    return weight

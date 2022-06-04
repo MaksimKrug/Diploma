@@ -34,7 +34,7 @@ def train_loop(
         automatic_optimization=params["automatic_optimization"],
         scheduler_type=params["scheduler_type"],
         scheduler_patience=params["scheduler_patience"],
-        num_classes = params["num_classes"]
+        num_classes=params["num_classes"],
     )
 
     model_parameters = round(
@@ -51,14 +51,15 @@ def train_loop(
     # torch.save(model.state_dict(), f"{callback_save_path}/{callback_name}.pt")
 
     # evaluate
-    print(f"{callback_save_path}/{callback_name}.ckpt")
     model = model.load_from_checkpoint(f"{callback_save_path}/{callback_name}.ckpt")
     model.eval()
     trainer = pl.Trainer(gpus=1, logger=logger)
     model_metrics = trainer.test(model, test_dataloader)
 
     # get inference time
-    inference_time_gpu, inference_time_cpu = calculate_inference_time(test_dataloader, model)
+    inference_time_gpu, inference_time_cpu = calculate_inference_time(
+        test_dataloader, model
+    )
 
     # update test metrics
     test_metrics = test_metrics.append(
@@ -81,7 +82,9 @@ def train_loop(
 
     return test_metrics
 
+
 activation_util = {}
+
 
 def get_activation(name):
     # activation for BiasLoss
@@ -89,6 +92,7 @@ def get_activation(name):
         activation_util[name] = output.detach()
 
     return hook
+
 
 def activation():
     return nn.ReLU(inplace=True)
@@ -485,8 +489,8 @@ class RegSeg(pl.LightningModule):
     # all the other models are for ablation studies
     def __init__(
         self,
-        weight=[1,1,1,1,1,1,1,1,1,1,1],
-        name="exp48_decoder26",
+        weight=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        name="exp52_decoder29",
         num_classes=11,
         pretrained="",
         ablate_decoder=False,
@@ -563,7 +567,7 @@ class RegSeg(pl.LightningModule):
         elif "decoder29" == decoder_name:
             self.decoder = Exp2_Decoder29(num_classes, self.body.channels())
         # elif "BisenetDecoder"==decoder_name:
-        #     self.decoder=BiseNetDecoder(num_classes,self.body.channels())
+        # self.decoder=BiseNetDecoder(num_classes,self.body.channels())
         # elif "SFNetDecoder"==decoder_name:
         #     self.decoder=SFNetDecoder(num_classes,self.body.channels())
         # elif "FaPNDecoder"==decoder_name:

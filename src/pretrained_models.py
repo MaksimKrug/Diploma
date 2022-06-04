@@ -123,7 +123,11 @@ class PretrainedModel(pl.LightningModule):
 
         # init pretrained model from https://github.com/qubvel/segmentation_models.pytorch
         self.model = smp.create_model(
-            arch, encoder_name=encoder_name, in_channels=3, classes=11,
+            arch,
+            encoder_name=encoder_name,
+            in_channels=3,
+            classes=11,
+            encoder_weights=None,
         )
         self.model.decoder.register_forward_hook(get_activation("4"))
 

@@ -208,7 +208,7 @@ class CustomDataset(Dataset):
         return data
 
     def get_augs(self):
-        augs = A.Compose([A.Resize(self.img_size[0], self.img_size[1], 1),])
+        augs = A.Compose([A.Resize(self.img_size[0], self.img_size[1], 1)])
         return augs
 
     def get_sample(self, data_batch):
