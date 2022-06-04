@@ -59,21 +59,6 @@ public class MainActivity extends AppCompatActivity {
     }};
     // class order
     List<Integer> class_order = asList(0, 7, 4, 2, 5, 6, 3, 1, 8, 10, 9);
-    // class2threshold
-    Map<Integer, Double> class2threshold = new HashMap<Integer, Double>() {{
-        put(0, 0.5);
-        put(1, 0.5);
-        put(2, 0.5);
-        put(3, 0.5);
-        put(4, 0.5);
-        put(5, 0.5);
-        put(6, 0.5);
-        put(7, 0.5);
-        put(8, 0.5);
-        put(9, 0.5);
-        put(10, 0.5);
-    }};
-
 
     private static int RESULT_LOAD_IMAGE = 1;
 
@@ -141,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 int initial_width = mBitmap.getWidth();
                 int initial_height = mBitmap.getHeight();
 
-                mBitmap = Bitmap.createScaledBitmap(mBitmap, 256, 256, true); // convert to 256x256
+                mBitmap = Bitmap.createScaledBitmap(mBitmap, 320, 320, true); // convert to 320x320
                 mImageView.setImageBitmap(mBitmap);
 
                 // read model
@@ -189,16 +174,21 @@ public class MainActivity extends AppCompatActivity {
                         // default color is black
                         intValues[h * width + w] = 0xFF000000;
                         // for each value in class order
+                        double best_score = 0.0;
+                        int filled_class = 0;
                         for (Integer class_val : class_order) {
                             // get score
                             float score = scores[class_val * (width * height) + h * width + w];
                             // sigmoid
                             score = (float) (1.0 / (1.0 + exp(-score)));
-                            // if score >= threshold
-                            if (score >= class2threshold.get(class_val)) {
-                                intValues[h * width + w] = class2color.get(class_val);
+                            // if score >= best_score
+                            if (score >= best_score) {
+                                best_score = score;
+                                filled_class = class_val;
+
                             }
                         }
+                        intValues[h * width + w] = class2color.get(filled_class);
                     }
                 }
 
