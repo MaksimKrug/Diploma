@@ -7,6 +7,10 @@ The main purpose of diploma is to develop Neural Network approach for face segme
 5. Android application have work but haven't be perefectly designed according to UI and UX
 
 
+## Beauty example
+Cause of low image quality, beauty examples looks not perfect and can be founded [here](https://github.com/MaksimKrug/Diploma/blob/main/src/Beauty%20example.ipynb)
+
+
 ## Data
 ### [Face/Head Segmentation Dataset Community Edition](https://store.mut1ny.com/product/face-head-segmentation-dataset-community-edition?v=f9308c5d0596)
 Free community edition of the face/head segmentation dataset that is licensed under creative common non-commercial license and can be used by everybody freely for research and educational purposes.
@@ -277,7 +281,7 @@ model	loss	optimizer	model_parameters	modules	IoU	F1	Inference Time (GPU), ms	In
 | Model     | Weights      | Loss        | Optimizer | Model Parameters  | Modules | IoU   | F1    | Inference Time (GPU), ms | Inference Time (CPU), ms |
 | --------  | ----         | ----        |---------  | ----------------  | ------- | ---   | --    | ------------------       | ------------------------ |
 | regseg    | equal        | BCEWeighted | Adam      | 3.7               | 371     | 0.809 | 0.889 | 10.098                   | 26.243                   |
-| regseg    | proportional | BCEWeighted | Adam      | 3.7               | 371     | 0.829 | 0.905 | 10.639                   | 28.544                   |
+| regseg    | equal        | BCEWeighted | Adam      | 3.7               | 371     | 0.829 | 0.905 | 10.639                   | 28.544                   |
 | regseg    | proportional | FocalLoss   | Adam      | 3.7               | 371     | 0.822 | 0.901 | 10.000                   | 25.460                   |
 | regseg    | proportional | BiasLoss    | Adam      | 3.7               | 371     | 0.822 | 0.901 | 10.093                   | 25.649                   |
 
