@@ -42,10 +42,10 @@ def train_loop(
     )
 
     # train model
-    trainer = pl.Trainer(gpus=1, max_epochs=epochs, logger=logger, callbacks=callbacks,)
-    trainer.fit(
-        model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader,
-    )
+    # trainer = pl.Trainer(gpus=1, max_epochs=epochs, logger=logger, callbacks=callbacks,)
+    # trainer.fit(
+    #     model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader,
+    # )
 
     # save model
     # torch.save(model.state_dict(), f"{callback_save_path}/{callback_name}.pt")
